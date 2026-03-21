@@ -99,8 +99,7 @@ func (c *CloudConfig) Annotate(a infer.Annotator) {
 
 // Annotate sets Elasticsearch configuration property descriptions and defaults.
 func (c *ElasticsearchConfig) Annotate(a infer.Annotator) {
-	a.Describe(&c.Endpoints, "List of Elasticsearch endpoint URLs.")
-	a.SetDefault(&c.Endpoints, nil, "ELASTICSEARCH_ENDPOINTS")
+	a.Describe(&c.Endpoints, "List of Elasticsearch endpoint URLs. Falls back to ELASTICSEARCH_ENDPOINTS env var.")
 	a.Describe(&c.Username, "Username for basic authentication.")
 	a.SetDefault(&c.Username, nil, "ELASTICSEARCH_USERNAME")
 	a.Describe(&c.Password, "Password for basic authentication.")
@@ -124,8 +123,7 @@ func (c *ElasticsearchConfig) Annotate(a infer.Annotator) {
 
 // Annotate sets Kibana configuration property descriptions and defaults.
 func (c *KibanaConfig) Annotate(a infer.Annotator) {
-	a.Describe(&c.Endpoints, "List of Kibana endpoint URLs.")
-	a.SetDefault(&c.Endpoints, nil, "KIBANA_ENDPOINT")
+	a.Describe(&c.Endpoints, "List of Kibana endpoint URLs. Falls back to KIBANA_ENDPOINT env var.")
 	a.Describe(&c.Username, "Username for basic authentication.")
 	a.SetDefault(&c.Username, nil, "KIBANA_USERNAME")
 	a.Describe(&c.Password, "Password for basic authentication.")
@@ -134,8 +132,7 @@ func (c *KibanaConfig) Annotate(a infer.Annotator) {
 	a.SetDefault(&c.APIKey, nil, "KIBANA_API_KEY")
 	a.Describe(&c.BearerToken, "Bearer token for JWT authentication.")
 	a.SetDefault(&c.BearerToken, nil, "KIBANA_BEARER_TOKEN")
-	a.Describe(&c.CACerts, "List of CA certificate file paths for TLS verification.")
-	a.SetDefault(&c.CACerts, nil, "KIBANA_CA_CERTS")
+	a.Describe(&c.CACerts, "List of CA certificate file paths for TLS verification. Falls back to KIBANA_CA_CERTS env var.")
 	a.Describe(&c.Insecure, "Skip TLS certificate verification.")
 	a.SetDefault(&c.Insecure, false, "KIBANA_INSECURE")
 }
@@ -152,8 +149,7 @@ func (c *FleetConfig) Annotate(a infer.Annotator) {
 	a.SetDefault(&c.APIKey, nil, "FLEET_API_KEY")
 	a.Describe(&c.BearerToken, "Bearer token for JWT authentication.")
 	a.SetDefault(&c.BearerToken, nil, "FLEET_BEARER_TOKEN")
-	a.Describe(&c.CACerts, "List of CA certificate file paths for TLS verification.")
-	a.SetDefault(&c.CACerts, nil, "FLEET_CA_CERTS")
+	a.Describe(&c.CACerts, "List of CA certificate file paths for TLS verification. Falls back to FLEET_CA_CERTS env var.")
 	a.Describe(&c.Insecure, "Skip TLS certificate verification.")
 }
 

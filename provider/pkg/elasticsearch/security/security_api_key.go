@@ -28,9 +28,9 @@ type ApiKeyState struct {
 	ApiKeyInputs
 
 	// Outputs
-	KeyID   string `pulumi:"keyId"`
-	ApiKey  string `pulumi:"apiKey"  provider:"secret"`
-	Encoded string `pulumi:"encoded" provider:"secret"`
+	KeyID       string `pulumi:"keyId"`
+	ApiKeyValue string `pulumi:"apiKeyValue" provider:"secret"`
+	Encoded     string `pulumi:"encoded"     provider:"secret"`
 }
 
 var (
@@ -84,7 +84,7 @@ func (r *ApiKey) Create(
 		Output: ApiKeyState{
 			ApiKeyInputs: req.Inputs,
 			KeyID:        result.ID,
-			ApiKey:       result.ApiKey,
+			ApiKeyValue:  result.ApiKey,
 			Encoded:      result.Encoded,
 		},
 	}, nil

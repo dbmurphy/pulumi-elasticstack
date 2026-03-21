@@ -1,0 +1,42 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - revive
+    - gosec
+    - goconst
+    - misspell
+    - unconvert
+    - errcheck
+    - govet
+    - staticcheck
+    - lll
+    - nakedret
+  settings:
+    lll:
+      line-length: 180
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - lll
+          - goconst
+
+formatters:
+  enable:
+    - gofmt
+    - gci
+  settings:
+    gci:
+      sections:
+        - standard
+        - blank
+        - default
+        - prefix(github.com/dbmurphy/pulumi-elasticstack)

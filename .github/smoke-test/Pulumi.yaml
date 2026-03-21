@@ -1,0 +1,117 @@
+name: smoke-test
+runtime: yaml
+
+resources:
+  # --- Provider (explicit, so we control credentials) ---
+  es-provider:
+    type: pulumi:providers:elasticstack
+    properties:
+      elasticsearch:
+        endpoints:
+          - ${esEndpoint}
+        username: ${esUsername}
+        password: ${esPassword}
+
+  # --- 1. Ingest Pipeline ---
+  smoke-pipeline:
+    type: elasticstack:elasticsearch:Pipeline
+    properties:
+      name: smoke-test-pipeline
+      description: "Smoke test ingest pipeline"
+      processors: '[{"set": {"field": "smoke_test", "value": true}}]'
+    options:
+      provider: ${es-provider}
+
+  # --- 2. Index Template ---
+  smoke-template:
+    type: elasticstack:elasticsearch:IndexTemplate
+    properties:
+      name: smoke-test-template
+      indexPatterns:
+        - smoke-test-tmpl-*
+      template: '{"settings": {"number_of_shards": 1, "number_of_replicas": 0}}'
+      priority: 100
+    options:
+      provider: ${es-provider}
+
+  # --- 3. Index ---
+  smoke-index:
+    type: elasticstack:elasticsearch:Index
+    properties:
+      name: smoke-test-index
+      numberOfShards: 1
+      numberOfReplicas: 0
+      deletionProtection: false
+      mappings: |
+        {
+          "properties": {
+            "email":      {"type": "keyword"},
+            "first_name": {"type": "text"},
+            "last_name":  {"type": "text"}
+          }
+        }
+    options:
+      provider: ${es-provider}
+
+  # --- 4. Enrich Policy (depends on index for source) ---
+  smoke-enrich:
+    type: elasticstack:elasticsearch:EnrichPolicy
+    properties:
+      name: smoke-test-enrich-policy
+      policyType: match
+      indices:
+        - smoke-test-index
+      matchField: email
+      enrichFields:
+        - first_name
+        - last_name
+    options:
+      provider: ${es-provider}
+      dependsOn:
+        - ${smoke-index}
+
+  # --- 5. Watch ---
+  smoke-watch:
+    type: elasticstack:elasticsearch:Watch
+    properties:
+      watchId: smoke-test-watch
+      trigger: '{"schedule": {"interval": "1h"}}'
+      input: '{"none": {}}'
+      condition: '{"always": {}}'
+      actions: '{"log_action": {"logging": {"text": "Smoke test watch triggered"}}}'
+    options:
+      provider: ${es-provider}
+
+  # --- 6. API Key (requires security enabled) ---
+  smoke-api-key:
+    type: elasticstack:elasticsearch:ApiKey
+    properties:
+      name: smoke-test-api-key
+      expiration: "1d"
+      roleDescriptors: '{"smoke_role": {"cluster": ["monitor"]}}'
+    options:
+      provider: ${es-provider}
+
+variables:
+  esEndpoint: ${config.esEndpoint}
+  esUsername: ${config.esUsername}
+  esPassword: ${config.esPassword}
+
+config:
+  esEndpoint:
+    type: string
+    default: "http://localhost:9200"
+  esUsername:
+    type: string
+    default: "elastic"
+  esPassword:
+    type: string
+    default: "changeme"
+
+outputs:
+  pipelineName: ${smoke-pipeline.name}
+  templateName: ${smoke-template.name}
+  indexName: ${smoke-index.name}
+  enrichPolicyName: ${smoke-enrich.name}
+  watchId: ${smoke-watch.watchId}
+  apiKeyName: ${smoke-api-key.name}

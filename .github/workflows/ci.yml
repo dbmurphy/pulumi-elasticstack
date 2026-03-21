@@ -28,9 +28,8 @@ jobs:
         run: cd provider && golangci-lint config verify
       - name: Run go vet
         run: cd provider && go vet ./...
-      - uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6
-        with:
-          working-directory: provider
+      - name: Run golangci-lint
+        run: cd provider && golangci-lint run
       - uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1
         with:
           work-dir: provider
@@ -111,7 +110,11 @@ jobs:
         run: cd sdk/python/python && pip install -e .
       - name: Build SDK (go)
         if: matrix.language == 'go'
-        run: cd sdk/go/go && go build ./...
+        run: |
+          cd sdk/go/go
+          go mod init github.com/dbmurphy/pulumi-elasticstack/sdk/go
+          go mod tidy
+          go build ./...
       - name: Build SDK (dotnet)
         if: matrix.language == 'dotnet'
         run: cd sdk/dotnet/dotnet && dotnet build

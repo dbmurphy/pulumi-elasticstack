@@ -88,6 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         language: [nodejs, python, go]
         # dotnet skipped: generated SDK has C# naming conflicts (CS0101, CS0542) to fix in schema
@@ -113,7 +114,7 @@ jobs:
         if: matrix.language == 'go'
         run: |
           cd sdk/go/go
-          go mod init github.com/dbmurphy/pulumi-elasticstack/sdk/go
+          go mod init local-package/sdk/go
           go mod tidy
           go build ./...
       # dotnet build step removed until schema naming conflicts are resolved

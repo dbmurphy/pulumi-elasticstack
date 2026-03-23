@@ -1,1 +1,26 @@
 PLAN.md
+
+# Build artifacts
+bin/
+schema.json
+
+# Generated SDKs
+sdk/
+
+# Go
+*.exe
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Pulumi stack configs (created during local testing)
+Pulumi.*.yaml
+!Pulumi.yaml
+
+# OS
+.DS_Store

@@ -1,0 +1,33 @@
+version: 2
+
+project_name: pulumi-resource-elasticstack
+
+builds:
+  - dir: provider
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    main: ./cmd/pulumi-resource-elasticstack/
+    binary: pulumi-resource-elasticstack
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/dbmurphy/pulumi-elasticstack/provider/pkg/provider.Version={{.Tag}}
+
+archives:
+  - name_template: "{{ .Binary }}-{{ .Tag }}-{{ .Os }}-{{ .Arch }}"
+
+changelog:
+  skip: true  # release-please handles changelogs
+
+release:
+  disable: false

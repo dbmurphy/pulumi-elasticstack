@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Pre-commit hook: runs fast checks that mirror CI.
+# Install: make hooks
+# Skip:    git commit --no-verify  (use when you know what you're doing)
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+errors=0
+
+step() { printf "${YELLOW}▶ %s${NC}\n" "$1"; }
+pass() { printf "${GREEN}✓ %s${NC}\n" "$1"; }
+fail() { printf "${RED}✗ %s${NC}\n" "$1"; errors=$((errors + 1)); }
+
+# Only run Go checks if Go files are staged
+STAGED_GO=$(git diff --cached --name-only --diff-filter=ACM -- '*.go' || true)
+if [ -z "$STAGED_GO" ]; then
+    printf "${GREEN}No Go files staged — skipping checks.${NC}\n"
+    exit 0
+fi
+
+cd provider
+
+# 1. Build — catches type errors, missing imports, etc.
+step "go build"
+if go build ./... 2>&1; then
+    pass "go build"
+else
+    fail "go build"
+fi
+
+# 2. go vet — catches suspicious constructs
+step "go vet"
+if go vet ./... 2>&1; then
+    pass "go vet"
+else
+    fail "go vet"
+fi
+
+# 3. golangci-lint — the full linter suite matching CI
+step "golangci-lint"
+if golangci-lint run ./... 2>&1; then
+    pass "golangci-lint"
+else
+    fail "golangci-lint"
+fi
+
+# 4. Tests (short mode — no race detector for speed)
+step "go test (short)"
+if go test ./... -count=1 -short 2>&1; then
+    pass "go test"
+else
+    fail "go test"
+fi
+
+# 5. go mod tidy check
+step "go mod tidy check"
+go mod tidy 2>/dev/null
+if [ -n "$(git diff -- go.mod go.sum)" ]; then
+    fail "go.mod/go.sum not tidy — run 'make tidy' and stage the changes"
+    git checkout -- go.mod go.sum 2>/dev/null || true
+else
+    pass "go mod tidy"
+fi
+
+echo ""
+if [ $errors -gt 0 ]; then
+    printf "${RED}Pre-commit failed with %d error(s). Fix issues or use 'git commit --no-verify' to skip.${NC}\n" "$errors"
+    exit 1
+else
+    printf "${GREEN}All pre-commit checks passed.${NC}\n"
+    exit 0
+fi

@@ -1,0 +1,73 @@
+name: Smoke Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      es_version:
+        description: "Elasticsearch version"
+        default: "8.17.0"
+        type: string
+  schedule:
+    - cron: "0 0 * * 0" # Sunday midnight UTC
+
+permissions:
+  contents: read
+
+env:
+  ES_VERSION: ${{ inputs.es_version || '8.17.0' }}
+
+jobs:
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: provider/go.mod
+
+      - uses: pulumi/actions@8582a9e8cc630786854029b4e09281acd6794b58 # v6
+
+      - name: Start Elasticsearch
+        run: docker compose -f .github/docker/docker-compose.yml up -d --wait
+
+      - name: Wait for Elasticsearch
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf -u elastic:changeme http://localhost:9200/_cluster/health; then
+              echo ""
+              echo "Elasticsearch is ready"
+              exit 0
+            fi
+            echo "Waiting for Elasticsearch... (attempt ${i}/30)"
+            sleep 5
+          done
+          echo "Elasticsearch failed to start"
+          exit 1
+
+      - name: Activate trial license
+        run: curl -sf -u elastic:changeme -XPOST 'http://localhost:9200/_license/start_trial?acknowledge=true'
+
+      - name: Build provider
+        run: make build
+
+      - name: Install provider plugin
+        run: pulumi plugin install resource elasticstack v0.1.0 -f bin/pulumi-resource-elasticstack
+
+      - name: Run smoke test
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ""
+        run: |
+          pulumi login --local
+          cd .github/smoke-test
+          pulumi stack init smoke-test
+          pulumi config set esEndpoint http://localhost:9200
+          pulumi config set esUsername elastic
+          pulumi config set esPassword changeme
+          pulumi up --yes --skip-preview --stack smoke-test
+          pulumi destroy --yes --skip-preview --stack smoke-test
+          pulumi stack rm smoke-test --yes
+
+      - name: Tear down Elasticsearch
+        if: always()
+        run: docker compose -f .github/docker/docker-compose.yml down -v

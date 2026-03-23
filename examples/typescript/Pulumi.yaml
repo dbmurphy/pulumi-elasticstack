@@ -1,0 +1,10 @@
+name: elasticstack-example
+runtime: nodejs
+description: Example Pulumi program using the elasticstack provider
+config:
+  elasticstack:elasticsearch:endpoints:
+    value: '["http://localhost:9200"]'
+  elasticstack:elasticsearch:username:
+    value: elastic
+  elasticstack:elasticsearch:password:
+    secret: true

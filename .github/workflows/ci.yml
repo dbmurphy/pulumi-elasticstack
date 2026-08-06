@@ -44,7 +44,7 @@ jobs:
           go-version-file: provider/go.mod
       - name: Run tests
         run: cd provider && go test ./... -v -count=1 -race -coverprofile=coverage.out
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: coverage
           path: provider/coverage.out
@@ -76,7 +76,7 @@ jobs:
             git diff
             exit 1
           fi
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: provider-binary
           path: |
@@ -120,7 +120,7 @@ jobs:
         if: matrix.language == 'dotnet'
         continue-on-error: true
         run: cd sdk/dotnet/dotnet && dotnet build
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: sdk-${{ matrix.language }}
           path: sdk/${{ matrix.language }}
